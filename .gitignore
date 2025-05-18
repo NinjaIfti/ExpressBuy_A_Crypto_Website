@@ -1,0 +1,55 @@
+/node_modules
+/public/hot
+/public/storage
+/storage/*.key
+/vendor
+.env
+.env.backup
+.env.production
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+auth.json
+npm-debug.log
+yarn-error.log
+/.fleet
+/.idea
+/.vscode
+/storage
+/tests
+/assets
+/public/
+# Compiled assets
+/public/build
+/public/assets/upload/
+/public/js
+/public/css
+/public/mix-manifest.json
+# Large files
+*.zip
+*.gz
+*.tar
+*.rar
+*.7z
+*.mp4
+*.mov
+*.avi
+editorconfig.zip
+
+# CodeCanyon original files 
+/codecanyon-*
+
+# MacOS system files
+.DS_Store
+._.DS_Store
+**/.DS_Store
+**/._.DS_Store
+
+# Logs
+*.log
+error_log
+
+# Temporary files
+*.swp
+*.swo
+*.tmp
