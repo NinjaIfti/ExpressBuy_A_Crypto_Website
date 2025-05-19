@@ -4,7 +4,7 @@
 @endphp
 
 <!-- Load the sidebar calculator CSS -->
-<link rel="stylesheet" href="{{ asset('assets/themes/light/css/sidebar-calculator.css') }}">
+<link rel="stylesheet" href="/assets/themes/light/css/sidebar-calculator.css">
 
 <!-- Custom fix for modals -->
 <style>

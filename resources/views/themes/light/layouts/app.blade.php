@@ -48,7 +48,7 @@
 
 
 @include('plugins')
-@if(Request::url() == url('/'))
+@if(Request::url() == url('/') || Request::path() == '/' || Route::currentRouteName() == 'home')
     @include($theme.'partials.exchange-module.exchange-js')
 @endif
 

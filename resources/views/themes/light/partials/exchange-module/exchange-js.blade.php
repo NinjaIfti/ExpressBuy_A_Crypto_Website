@@ -8,7 +8,7 @@
         let activeSendCurrency = "";
         let activeGetCurrency = "";
         
-        // Function to fix image paths
+        // Function to ensure image paths are absolute and correct
         function fixImagePath(path) {
             if (!path) return "{{asset(config('filelocation.default'))}}";
             
@@ -16,6 +16,9 @@
             if (path.startsWith('http://') || path.startsWith('https://')) {
                 return path;
             }
+            
+            // Get the base URL from the data attribute
+            const baseUrl = document.head.getAttribute('data-base_url') || "{{url('/')}}";
             
             // Remove any leading slashes
             const cleanPath = path.replace(/^\/+/, '');
