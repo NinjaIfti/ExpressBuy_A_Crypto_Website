@@ -100,31 +100,61 @@
 </div>
 @include($theme.'partials.modal')
 
-<!-- Fix currency modal styling -->
-<style>
-    .calculator-modal {
-        z-index: 9999 !important;
-    }
-    
-    .calculator-modal .modal-header {
-        align-items: center;
-        padding: 1rem;
-    }
-    
-    .calculator-modal .modal-header .cmn-btn-close {
-        position: absolute;
-        top: 10px;
-        right: 15px;
-    }
-    
-    .announcement-modal {
-        z-index: 9998 !important;
-    }
-    
-    /* Ensure modals are above all other elements */
-    .modal-backdrop {
-        z-index: 9990 !important;
-    }
-</style>
+<!-- Ensure exchange js is included -->
+@push('scripts')
+    <script>
+        // Explicitly initialize homepage calculator on document ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Make multiple attempts to initialize the calculator
+            // This helps with race conditions and timing issues
+            if (typeof HomepageExchange !== 'undefined' && typeof HomepageExchange.init === 'function') {
+                console.log('Explicitly initializing HomepageExchange from hero.blade.php');
+                HomepageExchange.init();
+                
+                // Make additional attempts at intervals
+                setTimeout(function() {
+                    if (typeof reinitializeHomepageExchange === 'function') {
+                        reinitializeHomepageExchange();
+                    } else if (typeof HomepageExchange !== 'undefined') {
+                        HomepageExchange.reinit();
+                    }
+                }, 500);
+                
+                setTimeout(function() {
+                    if (typeof reinitializeHomepageExchange === 'function') {
+                        reinitializeHomepageExchange();
+                    } else if (typeof HomepageExchange !== 'undefined') {
+                        HomepageExchange.reinit();
+                    }
+                }, 1500);
+            } else {
+                console.error('HomepageExchange module not loaded properly');
+                
+                // Try to load it later
+                setTimeout(function() {
+                    if (typeof HomepageExchange !== 'undefined' && typeof HomepageExchange.init === 'function') {
+                        HomepageExchange.init();
+                    }
+                }, 1000);
+            }
+        });
+        
+        // Monitor for changes in the inputs, which indicates the calculator is working
+        setInterval(function() {
+            const send = document.getElementById('send');
+            const receive = document.getElementById('receive');
+            
+            if (send && receive) {
+                if (send.value && !receive.value) {
+                    // Calculator not converting properly, try to reinitialize
+                    if (typeof reinitializeHomepageExchange === 'function') {
+                        console.log('Reinitializing calculator due to inactive conversion');
+                        reinitializeHomepageExchange();
+                    }
+                }
+            }
+        }, 5000);
+    </script>
+@endpush
 
 

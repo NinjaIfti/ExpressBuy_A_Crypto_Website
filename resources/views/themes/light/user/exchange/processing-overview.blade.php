@@ -32,14 +32,14 @@
                                     <span>@lang("Service fee")</span>
                                     <h6>{{rtrim(rtrim($exchangeRequest->service_fee, 0), '.')}} {{optional($exchangeRequest->getCurrency)->code}}</h6>
                                     <div
-                                        class="small">@lang("The service fee is already included in the displayed amount you'll get")
+                                        class="small">@lang("The service fee is already included in the displayed amount you’ll get")
                                     </div>
                                 </div>
                                 <div class="item">
                                     <span>@lang("Network fee")</span>
                                     <h6>{{rtrim(rtrim($exchangeRequest->network_fee, 0), '.')}} {{optional($exchangeRequest->getCurrency)->code}}</h6>
                                     <div
-                                        class="small">@lang("The network fee is already included in the displayed amount you'll get")
+                                        class="small">@lang("The network fee is already included in the displayed amount you’ll get")
                                     </div>
                                 </div>
                             </div>
@@ -59,7 +59,6 @@
                         </div>
                     </div>
                     <form action="{{route('exchangeInitPayment',$exchangeRequest->utr)}}" method="GET">
-                        <!-- {{-- Pay by wallet functionality temporarily disabled
                         @if(auth()->check())
                             <div class="check mt-3">
                                 <input type="checkbox" name="payByWallet" class="form-check-input" id="exampleCheck1">
@@ -67,7 +66,6 @@
                                        for="exampleCheck1">@lang("Pay by wallet")</label>
                             </div>
                         @endif
-                        --}} -->
                         <div class="widget-area">
                             <button
                                class="cmn-btn w-100">@lang("Confirm & make payment")</button>

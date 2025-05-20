@@ -73,7 +73,6 @@
                       id="sidebarFormId">
                     @csrf
                     
-
                     <div class="calculator-body">
                         <div class="cmn-tabs">
                             <ul class="nav nav-pills" id="sidebar-pills-tab" role="tablist">
@@ -233,7 +232,7 @@
                     </button>
                 </div>
                 <div class="search-box mt-10">
-                    <input type="text" id="sidebar-search-input" onkeyup="sidebarFilterItems('sidebar-search-input')" class="form-control"
+                    <input type="text" id="sidebar-search-input" onkeyup="sidebarWallet.filterItems('sidebar-search-input')" class="form-control"
                            placeholder="@lang('Search here')...">
                     <button type="submit" class="search-btn"><i class="far fa-search"></i></button>
                 </div>
@@ -259,7 +258,7 @@
                     </button>
                 </div>
                 <div class="search-box mt-10">
-                    <input type="text" id="sidebar-search-input2" onkeyup="sidebarFilterItems2('sidebar-search-input2')" class="form-control"
+                    <input type="text" id="sidebar-search-input2" onkeyup="sidebarWallet.filterItems2('sidebar-search-input2')" class="form-control"
                            placeholder="Search here...">
                     <button type="submit" class="search-btn"><i class="far fa-search"></i></button>
                 </div>
@@ -275,73 +274,74 @@
 </div>
 <!-- Modal section end -->
 
+@push('extra_scripts')
 <script>
-    'use strict';
-    window.onload = function () {
-        var totalUsdValue = 0;
-        var route = "{{route('user.cryptoDeposit')}}";
-
-        async function fetchData() {
-            try {
-                const response = await axios.get('{{route('getAssetsBalance')}}');
-                if (response.data.status === 'success') {
-                    let wallets = response.data.wallets;
-                    let html = "";
-
-                    wallets.forEach(wallet => {
-                        let walletRoute = route + '/' + wallet.crypto_currency.code;
-                        html += `<div class="wallet-item">
-                <div class="left-side">
-                    <a href="${walletRoute}" class="deposit-btn" title="@lang('Deposit')"
-                    ><i class="fa-regular fa-arrow-up"></i></a>
-                </div>
-                <div class="middle-side">
-                    <div class="img-box">
-                        <img src="${wallet.crypto_currency.image_path}" alt="..."/>
-                    </div>
-                    <div>
-                        <h5 class="mb-0">${wallet.crypto_currency.code}</h5>
-                        <small>${wallet.crypto_currency.currency_name}</small>
-                    </div>
-                </div>
-                <div class="right-side">
-                    <h5 class="mb-0">${wallet.balance}</h5>
-                    <small>$${dollarEquivalent(wallet.balance, wallet.crypto_currency.usd_rate)}</small>
-                </div>
-            </div>`;
-                    });
-
-                    $('#showAssetsBalance').html(html);
-                    totalUsdCount();
-                }
-            } catch (error) {
-                console.error('Error fetching assets balance:', error);
-            }
-        }
-
-        function dollarEquivalent(amount, rate) {
-            if (!amount || !rate) return "0";
-            let usdValue = (parseFloat(amount) * parseFloat(rate)).toFixed(2);
-            totalUsdValue += parseFloat(usdValue);
-
-            return usdValue;
-        }
-
-        function totalUsdCount() {
-            $('#totalUsdValue').text(`$${(totalUsdValue).toFixed(2)}`)
-        }
-
-        fetchData();
-    };
-</script>
-
-<script>
-    'use strict';
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('Sidebar Exchange module DOM loaded');
+    // Create a namespace for wallet functionality to avoid conflicts
+    const sidebarWallet = (function() {
+        'use strict';
         
-        // Set the base URL for image paths
-        const baseUrl = "{{$basePath}}";
+        // Private variables
+        let totalUsdValue = 0;
+        let sidebarActiveTab = "exchange";
+        let sidebarActiveSendCurrency = "";
+        let sidebarActiveGetCurrency = "";
+        
+        // Base functions for assets display
+        function initAssets() {
+            var route = "{{route('user.cryptoDeposit')}}";
+
+            async function fetchData() {
+                try {
+                    const response = await axios.get('{{route('getAssetsBalance')}}');
+                    if (response.data.status === 'success') {
+                        let wallets = response.data.wallets;
+                        let html = "";
+
+                        wallets.forEach(wallet => {
+                            let walletRoute = route + '/' + wallet.crypto_currency.code;
+                            html += `<div class="wallet-item">
+                    <div class="left-side">
+                        <a href="${walletRoute}" class="deposit-btn" title="@lang('Deposit')"
+                        ><i class="fa-regular fa-arrow-up"></i></a>
+                    </div>
+                    <div class="middle-side">
+                        <div class="img-box">
+                            <img src="${wallet.crypto_currency.image_path}" alt="..."/>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">${wallet.crypto_currency.code}</h5>
+                            <small>${wallet.crypto_currency.currency_name}</small>
+                        </div>
+                    </div>
+                    <div class="right-side">
+                        <h5 class="mb-0">${wallet.balance}</h5>
+                        <small>$${dollarEquivalent(wallet.balance, wallet.crypto_currency.usd_rate)}</small>
+                    </div>
+                </div>`;
+                        });
+
+                        $('#showAssetsBalance').html(html);
+                        totalUsdCount();
+                    }
+                } catch (error) {
+                    console.error('Error fetching assets balance:', error);
+                }
+            }
+
+            function dollarEquivalent(amount, rate) {
+                if (!amount || !rate) return "0";
+                let usdValue = (parseFloat(amount) * parseFloat(rate)).toFixed(2);
+                totalUsdValue += parseFloat(usdValue);
+
+                return usdValue;
+            }
+
+            function totalUsdCount() {
+                $('#totalUsdValue').text(`$${(totalUsdValue).toFixed(2)}`)
+            }
+
+            fetchData();
+        }
         
         // Function to fix image paths
         function fixImagePath(path) {
@@ -357,24 +357,141 @@
             
             // Check if path contains "assets/upload"
             if (cleanPath.includes('assets/upload')) {
-                return `${baseUrl}/${cleanPath}`;
+                return `{{$basePath}}/${cleanPath}`;
             } else {
                 // Handle case where we just have the filename
-                return `${baseUrl}/assets/upload/${cleanPath}`;
+                return `{{$basePath}}/assets/upload/${cleanPath}`;
             }
         }
         
-        // Variables specific to sidebar exchange module
-        let sidebarActiveTab = "exchange";
-        let sidebarActiveSendCurrency = "";
-        let sidebarActiveGetCurrency = "";
-        
-        Notiflix.Block.dots('#sidebar-showLoader', {
-            backgroundColor: loaderColor,
-        });
-        
-        // Get exchange currency data specifically for sidebar
-        sidebarGetExchangeCurrency();
+        // Exchange functionality
+        function initExchange() {
+            // Only initialize if the exchange sidebar exists
+            if (!document.getElementById('sidebar-showLoader')) {
+                return;
+            }
+            
+            Notiflix.Block.dots('#sidebar-showLoader', {
+                backgroundColor: loaderColor,
+            });
+            
+            sidebarGetExchangeCurrency();
+            
+            // Event handlers specifically for sidebar exchange
+            $('.custom-sidebar').on("keyup", "#sidebar-send", function() {
+                let sendAmount = $(this).val();
+                sidebarGetCalculation(sendAmount);
+            });
+            
+            $('.custom-sidebar').on("keyup", "#sidebar-receive", function() {
+                let getAmount = $(this).val();
+                sidebarSendCalculation(getAmount);
+            });
+            
+            $('.custom-sidebar').on("click", "#sidebar-swapBtn", function() {
+                let sendAmount = $("#sidebar-receive").val();
+                $("#sidebar-send").val(sendAmount);
+                sidebarGetCalculation(sendAmount);
+            });
+            
+            // Currency selection in modals
+            $(document).on("click", ".sidebar-sendModal", function(e) {
+                // Only proceed if this click is from our sidebar modals
+                if (!$(this).closest('.sidebar-calculator-modal').length) {
+                    return;
+                }
+                e.stopPropagation();
+                
+                sidebarActiveSendCurrency = $(this).data('res');
+                sidebarSetSendCurrency(sidebarActiveSendCurrency);
+                let sendAmount = $("#sidebar-send").val();
+                sidebarGetCalculation(sendAmount);
+                
+                // Update checkmarks
+                $('.sidebar-sendModal .right-side').empty();
+                $(this).find('.right-side').html('<i class="fa-sharp fa-solid fa-circle-check"></i>');
+                
+                // Close modal without affecting other parts of the page
+                try {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('sidebar-calculator-modal'));
+                    if (modal) {
+                        modal.hide();
+                    }
+                } catch (error) {
+                    console.error('Modal close error:', error);
+                }
+            });
+            
+            $(document).on("click", ".sidebar-getModal", function(e) {
+                // Only proceed if this click is from our sidebar modals
+                if (!$(this).closest('.sidebar-calculator-modal').length) {
+                    return;
+                }
+                e.stopPropagation();
+                
+                sidebarActiveGetCurrency = $(this).data('res');
+                sidebarSetGetCurrency(sidebarActiveGetCurrency);
+                let sendAmount = $("#sidebar-send").val();
+                sidebarGetCalculation(sendAmount);
+                
+                // Update checkmarks
+                $('.sidebar-getModal .right-side').empty();
+                $(this).find('.right-side').html('<i class="fa-sharp fa-solid fa-circle-check"></i>');
+                
+                // Close modal without affecting other parts of the page
+                try {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('sidebar-calculator-modal2'));
+                    if (modal) {
+                        modal.hide();
+                    }
+                } catch (error) {
+                    console.error('Modal close error:', error);
+                }
+            });
+            
+            // Tab click handlers
+            $('.custom-sidebar').on("click", "#sidebar-pills-exchange-tab", function() {
+                Notiflix.Block.dots('#sidebar-showLoader', {
+                    backgroundColor: loaderColor,
+                });
+                
+                let formSubmitRoute = "{{route('exchangeRequest')}}";
+                $("#sidebarFormId").attr("action", formSubmitRoute);
+                
+                sidebarActiveTab = 'exchange';
+                let route = "{{route('getExchangeCurrency')}}";
+                sidebarGetExchangeCurrency(route);
+                $("#sidebar-submitBtn").text("Exchange Now");
+            });
+            
+            $('.custom-sidebar').on("click", "#sidebar-pills-Buy-tab", function() {
+                Notiflix.Block.dots('#sidebar-showLoader', {
+                    backgroundColor: loaderColor,
+                });
+                
+                let formSubmitRoute = "{{route('buyRequest')}}";
+                $("#sidebarFormId").attr("action", formSubmitRoute);
+                
+                sidebarActiveTab = 'buy';
+                let route = "{{route('getBuyCurrency')}}";
+                sidebarGetExchangeCurrency(route);
+                $("#sidebar-submitBtn").text("Buy Now");
+            });
+            
+            $('.custom-sidebar').on("click", "#sidebar-pills-Sell-tab", function() {
+                Notiflix.Block.dots('#sidebar-showLoader', {
+                    backgroundColor: loaderColor,
+                });
+                
+                let formSubmitRoute = "{{route('sellRequest')}}";
+                $("#sidebarFormId").attr("action", formSubmitRoute);
+                
+                sidebarActiveTab = 'sell';
+                let route = "{{route('getSellCurrency')}}";
+                sidebarGetExchangeCurrency(route);
+                $("#sidebar-submitBtn").text("Sell Now");
+            });
+        }
         
         function sidebarGetExchangeCurrency(route = "{{route('getExchangeCurrency')}}") {
             axios.get(route)
@@ -386,168 +503,13 @@
                     sidebarSetGetCurrency(sidebarActiveGetCurrency);
                     sidebarShowSend(response.data.sendCurrencies);
                     sidebarShowGet(response.data.getCurrencies);
-                    $("input[name='exchangeSendAmount']").val((response.data.initialSendAmount).toFixed(2));
+                    $("#sidebar-send").val((response.data.initialSendAmount).toFixed(2));
                     sidebarGetCalculation(response.data.initialSendAmount);
                 })
                 .catch(function (error) {
                     console.error('Error fetching exchange currency data:', error);
                 });
         }
-        
-        // Modal filtering functions
-        window.sidebarFilterItems = function(inputId) {
-            const input = document.getElementById(inputId);
-            const filter = input.value.toUpperCase();
-            const div = document.getElementById('sidebar-show-send');
-            const items = div.getElementsByClassName('item');
-            
-            for (let i = 0; i < items.length; i++) {
-                const title = items[i].querySelector('.title');
-                const subtitle = items[i].querySelector('.sub-title');
-                const txtValue = title.textContent + subtitle.textContent;
-                
-                if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                    items[i].style.display = "";
-                } else {
-                    items[i].style.display = "none";
-                }
-            }
-        };
-        
-        window.sidebarFilterItems2 = function(inputId) {
-            const input = document.getElementById(inputId);
-            const filter = input.value.toUpperCase();
-            const div = document.getElementById('sidebar-show-get');
-            const items = div.getElementsByClassName('item');
-            
-            for (let i = 0; i < items.length; i++) {
-                const title = items[i].querySelector('.title');
-                const subtitle = items[i].querySelector('.sub-title');
-                const txtValue = title.textContent + subtitle.textContent;
-                
-                if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                    items[i].style.display = "";
-                } else {
-                    items[i].style.display = "none";
-                }
-            }
-        };
-        
-        // Event handlers for sidebar exchange
-        $(document).on("keyup", "#sidebar-send", function() {
-            let sendAmount = $(this).val();
-            sidebarGetCalculation(sendAmount);
-        });
-        
-        $(document).on("keyup", "#sidebar-receive", function() {
-            let getAmount = $(this).val();
-            sidebarSendCalculation(getAmount);
-        });
-        
-        $(document).on("click", "#sidebar-swapBtn", function() {
-            let sendAmount = $("#sidebar-receive").val();
-            $("#sidebar-send").val(sendAmount);
-            sidebarGetCalculation(sendAmount);
-        });
-        
-        // Currency selection in modals
-        $(document).on("click", ".sidebar-sendModal", function(e) {
-            // Prevent any default behavior that might close the sidebar
-            e.stopPropagation();
-            
-            sidebarActiveSendCurrency = $(this).data('res');
-            sidebarSetSendCurrency(sidebarActiveSendCurrency);
-            let sendAmount = $("#sidebar-send").val();
-            sidebarGetCalculation(sendAmount);
-            
-            // Update checkmarks
-            $('.sidebar-sendModal .right-side').empty();
-            $(this).find('.right-side').html('<i class="fa-sharp fa-solid fa-circle-check"></i>');
-            
-            // Close ONLY the modal, not the sidebar
-            const modal = bootstrap.Modal.getInstance(document.getElementById('sidebar-calculator-modal'));
-            if (modal) {
-                modal.hide();
-            }
-        });
-        
-        $(document).on("click", ".sidebar-getModal", function(e) {
-            // Prevent any default behavior that might close the sidebar
-            e.stopPropagation();
-            
-            sidebarActiveGetCurrency = $(this).data('res');
-            sidebarSetGetCurrency(sidebarActiveGetCurrency);
-            let sendAmount = $("#sidebar-send").val();
-            sidebarGetCalculation(sendAmount);
-            
-            // Update checkmarks
-            $('.sidebar-getModal .right-side').empty();
-            $(this).find('.right-side').html('<i class="fa-sharp fa-solid fa-circle-check"></i>');
-            
-            // Close ONLY the modal, not the sidebar
-            const modal = bootstrap.Modal.getInstance(document.getElementById('sidebar-calculator-modal2'));
-            if (modal) {
-                modal.hide();
-            }
-        });
-
-        // Fix to prevent sidebar from closing when modals are closed
-        $(document).on('hidden.bs.modal', '.sidebar-calculator-modal', function(e) {
-            // Stop the event from propagating to prevent sidebar closure
-            e.stopPropagation();
-            
-            // Force the sidebar to stay visible
-            setTimeout(function() {
-                $('.custom-sidebar').css({
-                    'display': 'block',
-                    'opacity': '1',
-                    'visibility': 'visible'
-                });
-            }, 50);
-        });
-        
-        // Tab click handlers
-        $(document).on("click", "#sidebar-pills-exchange-tab", function() {
-            Notiflix.Block.dots('#sidebar-showLoader', {
-                backgroundColor: loaderColor,
-            });
-            
-            let formSubmitRoute = "{{route('exchangeRequest')}}";
-            $("#sidebarFormId").attr("action", formSubmitRoute);
-            
-            sidebarActiveTab = 'exchange';
-            let route = "{{route('getExchangeCurrency')}}";
-            sidebarGetExchangeCurrency(route);
-            $("#sidebar-submitBtn").text("Exchange Now");
-        });
-        
-        $(document).on("click", "#sidebar-pills-Buy-tab", function() {
-            Notiflix.Block.dots('#sidebar-showLoader', {
-                backgroundColor: loaderColor,
-            });
-            
-            let formSubmitRoute = "{{route('buyRequest')}}";
-            $("#sidebarFormId").attr("action", formSubmitRoute);
-            
-            sidebarActiveTab = 'buy';
-            let route = "{{route('getBuyCurrency')}}";
-            sidebarGetExchangeCurrency(route);
-            $("#sidebar-submitBtn").text("Buy Now");
-        });
-        
-        $(document).on("click", "#sidebar-pills-Sell-tab", function() {
-            Notiflix.Block.dots('#sidebar-showLoader', {
-                backgroundColor: loaderColor,
-            });
-            
-            let formSubmitRoute = "{{route('sellRequest')}}";
-            $("#sidebarFormId").attr("action", formSubmitRoute);
-            
-            sidebarActiveTab = 'sell';
-            let route = "{{route('getSellCurrency')}}";
-            sidebarGetExchangeCurrency(route);
-            $("#sidebar-submitBtn").text("Sell Now");
-        });
         
         // Show currency lists in modals
         function sidebarShowSend(currencies) {
@@ -612,7 +574,7 @@
             $('#sidebar-showSendImage').attr('src', fixedPath);
             $('#sidebar-showSendCode').text(currency.code);
             $('#sidebar-showSendName').text(currency.name);
-            $("input[name='exchangeSendCurrency']").val(currency.id);
+            $(".custom-sidebar input[name='exchangeSendCurrency']").val(currency.id);
         }
         
         function sidebarSetGetCurrency(currency) {
@@ -620,7 +582,7 @@
             $('#sidebar-showGetImage').attr('src', fixedPath);
             $('#sidebar-showGetCode').text(currency.code);
             $('#sidebar-showGetName').text(currency.name);
-            $("input[name='exchangeGetCurrency']").val(currency.id);
+            $(".custom-sidebar input[name='exchangeGetCurrency']").val(currency.id);
         }
         
         // Calculation functions
@@ -690,54 +652,96 @@
             }
         }
         
-        // Initialize modals
-        setTimeout(function() {
-            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-                const calculatorModal = document.getElementById('sidebar-calculator-modal');
-                const calculatorModal2 = document.getElementById('sidebar-calculator-modal2');
-                
-                if (calculatorModal) {
-                    new bootstrap.Modal(calculatorModal);
-                    console.log('Sidebar calculator modal 1 initialized');
-                }
-                
-                if (calculatorModal2) {
-                    new bootstrap.Modal(calculatorModal2);
-                    console.log('Sidebar calculator modal 2 initialized');
-                }
-            }
+        // Modal filtering functions
+        function filterItems(inputId) {
+            const input = document.getElementById(inputId);
+            const filter = input.value.toUpperCase();
+            const div = document.getElementById('sidebar-show-send');
+            const items = div.getElementsByClassName('item');
             
-            // CRITICAL FIX: Override Bootstrap modal backdrop behavior to prevent sidebar closure
-            const originalBootstrapModalHide = bootstrap.Modal.prototype.hide;
-            if (originalBootstrapModalHide) {
-                bootstrap.Modal.prototype.hide = function() {
-                    // Run the original hide method
-                    originalBootstrapModalHide.call(this);
-                    
-                    // Force sidebar to remain visible after any modal is closed
-                    setTimeout(function() {
-                        document.querySelectorAll('.custom-sidebar').forEach(sidebar => {
-                            sidebar.style.display = 'block';
-                            sidebar.style.opacity = '1';
-                            sidebar.style.visibility = 'visible';
-                        });
-                    }, 10);
-                };
-            }
-        }, 1000);
-
-        // Global document click handler to prevent sidebar closing
-        $(document).on('click', function(e) {
-            // Make sure sidebar stays visible when clicking elsewhere
-            setTimeout(function() {
-                if (!$('.custom-sidebar').is(':visible')) {
-                    $('.custom-sidebar').css({
-                        'display': 'block',
-                        'opacity': '1',
-                        'visibility': 'visible'
-                    });
+            for (let i = 0; i < items.length; i++) {
+                const title = items[i].querySelector('.title');
+                const subtitle = items[i].querySelector('.sub-title');
+                const txtValue = title.textContent + subtitle.textContent;
+                
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                    items[i].style.display = "";
+                } else {
+                    items[i].style.display = "none";
                 }
-            }, 10);
-        });
+            }
+        }
+        
+        function filterItems2(inputId) {
+            const input = document.getElementById(inputId);
+            const filter = input.value.toUpperCase();
+            const div = document.getElementById('sidebar-show-get');
+            const items = div.getElementsByClassName('item');
+            
+            for (let i = 0; i < items.length; i++) {
+                const title = items[i].querySelector('.title');
+                const subtitle = items[i].querySelector('.sub-title');
+                const txtValue = title.textContent + subtitle.textContent;
+                
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                    items[i].style.display = "";
+                } else {
+                    items[i].style.display = "none";
+                }
+            }
+        }
+        
+        // Initialize modals safely
+        function initModals() {
+            setTimeout(function() {
+                if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                    const calculatorModal = document.getElementById('sidebar-calculator-modal');
+                    const calculatorModal2 = document.getElementById('sidebar-calculator-modal2');
+                    
+                    if (calculatorModal) {
+                        new bootstrap.Modal(calculatorModal);
+                        console.log('Sidebar calculator modal 1 initialized');
+                    }
+                    
+                    if (calculatorModal2) {
+                        new bootstrap.Modal(calculatorModal2);
+                        console.log('Sidebar calculator modal 2 initialized');
+                    }
+                }
+            }, 1000);
+        }
+        
+        // Initialize everything
+        function init() {
+            initAssets();
+            initExchange();
+            initModals();
+            
+            // Toggle sidebar on button click
+            $(document).on('click', '#showAssetsBtn', function() {
+                $('.sidebar-content').toggleClass('active');
+            });
+        }
+        
+        // Return public methods and properties
+        return {
+            init: init,
+            filterItems: filterItems,
+            filterItems2: filterItems2
+        };
+    })();
+
+    // Initialize the wallet sidebar
+    document.addEventListener('DOMContentLoaded', function() {
+        sidebarWallet.init();
+        
+        // Ensure we don't interfere with homepage calculator
+        if (typeof HomepageExchange !== 'undefined' && typeof HomepageExchange.init === 'function') {
+            console.log('HomepageExchange module detected, making sure it runs');
+            setTimeout(function() {
+                HomepageExchange.init();
+            }, 500);
+        }
     });
 </script>
+@endpush

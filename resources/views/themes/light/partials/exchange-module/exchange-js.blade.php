@@ -1,5 +1,5 @@
 <script>
-    // Create a namespace for homepage calculator to avoid global conflicts
+    // Create a namespace for homepage calculator to avoid conflicts
     const HomepageExchange = (function() {
         'use strict';
         // Set the base URL for image paths
@@ -7,6 +7,7 @@
         let activeTab = "exchange";
         let activeSendCurrency = "";
         let activeGetCurrency = "";
+        let isInitialized = false;
         
         // Function to ensure image paths are absolute and correct
         function fixImagePath(path) {
@@ -36,6 +37,12 @@
         function init() {
             console.log('Homepage Exchange module initializing');
             
+            // Prevent double initialization
+            if (isInitialized) {
+                console.log('Homepage exchange calculator already initialized');
+                return;
+            }
+            
             // Check if the homepage exchange calculator exists
             if (!document.getElementById('showLoader')) {
                 console.log('No homepage exchange calculator found');
@@ -46,7 +53,12 @@
                 backgroundColor: loaderColor,
             });
             getExchangeCurrency();
-            
+            bindEvents();
+            isInitialized = true;
+        }
+        
+        // Bind all event handlers 
+        function bindEvents() {
             // Add filter functions to window for modal search
             window.filterItems = function(inputId) {
                 const input = document.getElementById(inputId);
@@ -87,17 +99,17 @@
             };
             
             // Event bindings - ensure we target only homepage elements
-            $(document).on("keyup", "#send", function () {
+            $(document).off("keyup", "#send").on("keyup", "#send", function () {
                 let sendAmount = $(this).val();
                 getCalculation(sendAmount);
             });
 
-            $(document).on("keyup", "#receive", function () {
+            $(document).off("keyup", "#receive").on("keyup", "#receive", function () {
                 let getAmount = $(this).val();
                 sendCalculation(getAmount);
             });
 
-            $(document).on("click", "#swapBtn", function () {
+            $(document).off("click", "#swapBtn").on("click", "#swapBtn", function () {
                 // Only target the homepage swap button
                 if ($(this).closest('#showLoader').length > 0) {
                     let sendAmount = $("#receive").val();
@@ -106,9 +118,9 @@
                 }
             });
 
-            $(document).on("click", ".sendModal", function () {
+            $(document).off("click", ".sendModal").on("click", ".sendModal", function () {
                 // Only target homepage modal elements
-                if ($(this).closest('.home-calculator-modal').length > 0) {
+                if ($(this).closest('.home-calculator-modal').length > 0 || !$(this).closest('.sidebar-calculator-modal').length) {
                     activeSendCurrency = $(this).data('res');
                     setSendCurrency(activeSendCurrency);
                     let sendAmount = $("#send").val();
@@ -120,9 +132,9 @@
                 }
             });
 
-            $(document).on("click", ".getModal", function () {
+            $(document).off("click", ".getModal").on("click", ".getModal", function () {
                 // Only target homepage modal elements
-                if ($(this).closest('.home-calculator-modal').length > 0) {
+                if ($(this).closest('.home-calculator-modal').length > 0 || !$(this).closest('.sidebar-calculator-modal').length) {
                     activeGetCurrency = $(this).data('res');
                     setGetCurrency(activeGetCurrency);
                     let sendAmount = $("#send").val();
@@ -134,7 +146,7 @@
                 }
             });
             
-            $(document).on("click", "#pills-exchange-tab", function () {
+            $(document).off("click", "#pills-exchange-tab").on("click", "#pills-exchange-tab", function () {
                 // Only target homepage tabs
                 if ($(this).closest('#pills-tab').length > 0) {
                     Notiflix.Block.dots('#showLoader', {
@@ -151,7 +163,7 @@
                 }
             });
 
-            $(document).on("click", "#pills-Buy-tab", function () {
+            $(document).off("click", "#pills-Buy-tab").on("click", "#pills-Buy-tab", function () {
                 // Only target homepage tabs
                 if ($(this).closest('#pills-tab').length > 0) {
                     Notiflix.Block.dots('#showLoader', {
@@ -168,7 +180,7 @@
                 }
             });
 
-            $(document).on("click", "#pills-Sell-tab", function () {
+            $(document).off("click", "#pills-Sell-tab").on("click", "#pills-Sell-tab", function () {
                 // Only target homepage tabs
                 if ($(this).closest('#pills-tab').length > 0) {
                     Notiflix.Block.dots('#showLoader', {
@@ -200,7 +212,7 @@
             });
 
             // Announcement click handlers
-            $(document).on("click", ".announceClass", function () {
+            $(document).off("click", ".announceClass").on("click", ".announceClass", function () {
                 let announceBodyShow = $('#announceBodyShow');
                 announceBodyShow.html('');
                 let heading = $(this).data('heading');
@@ -365,12 +377,27 @@
         
         // Return public methods
         return {
-            init: init
+            init: init,
+            reinit: function() {
+                isInitialized = false;
+                init();
+            }
         };
     })();
 
     // Initialize the homepage exchange module
     document.addEventListener('DOMContentLoaded', function() {
         HomepageExchange.init();
+        // Reinitialize after a short delay to ensure everything is loaded
+        setTimeout(function() {
+            HomepageExchange.reinit();
+        }, 1000);
     });
+    
+    // Create a global function that can be called from anywhere to reinitialize
+    function reinitializeHomepageExchange() {
+        if (typeof HomepageExchange !== 'undefined') {
+            HomepageExchange.reinit();
+        }
+    }
 </script>

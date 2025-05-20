@@ -8,22 +8,20 @@
         </li>
 
         <li class="nav-item">
-            <a class="nav-link {{menuActive(['user.exchangeList','user.exchangeDetails'])}} sidebar-trigger" 
-               href="javascript:void(0);" onclick="openSidebarAndNavigate('{{route('user.exchangeList')}}', 'exchange')">
+            <a class="nav-link {{menuActive(['user.exchangeList','user.exchangeDetails'])}}"
+               href="{{route('user.exchangeList')}}">
                 <i class="fa-light fal fa-exchange"></i>
                 <span>@lang('Exchange')</span>
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {{menuActive(['user.buyList','user.buyDetails'])}} sidebar-trigger" 
-               href="javascript:void(0);" onclick="openSidebarAndNavigate('{{route('user.buyList')}}', 'buy')">
+            <a class="nav-link {{menuActive(['user.buyList','user.buyDetails'])}}" href="{{route('user.buyList')}}">
                 <i class="fa-light fal fa-wallet"></i>
                 <span>@lang('Buy')</span>
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {{menuActive(['user.sellList','user.sellDetails'])}} sidebar-trigger" 
-               href="javascript:void(0);" onclick="openSidebarAndNavigate('{{route('user.sellList')}}', 'sell')">
+            <a class="nav-link {{menuActive(['user.sellList','user.sellDetails'])}}" href="{{route('user.sellList')}}">
                 <i class="fa-light fal fa-tags"></i>
                 <span>@lang('Sell')</span>
             </a>
@@ -73,53 +71,3 @@
     </ul>
 
 </aside>
-
-<!-- JavaScript to handle sidebar slider activation -->
-<script>
-    // Function to open sidebar and navigate to a page
-    function openSidebarAndNavigate(url, tabType) {
-        // Store which tab should be activated in localStorage
-        localStorage.setItem('openSidebarTab', tabType);
-        
-        // Navigate to the URL
-        window.location.href = url;
-    }
-    
-    // Check if we should open the sidebar on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        const tabToOpen = localStorage.getItem('openSidebarTab');
-        
-        if (tabToOpen) {
-            // Clear the storage to prevent it from opening on subsequent page loads
-            localStorage.removeItem('openSidebarTab');
-            
-            // Wait for everything to be loaded
-            setTimeout(function() {
-                // First, make sure sidebar is visible
-                const sidebar = document.querySelector('.custom-sidebar');
-                if (sidebar) {
-                    sidebar.style.display = 'block';
-                    sidebar.style.opacity = '1';
-                    sidebar.style.visibility = 'visible';
-                    
-                    console.log('Opening sidebar with tab:', tabToOpen);
-                    
-                    // Click the appropriate tab
-                    if (tabToOpen === 'exchange' && document.getElementById('sidebar-pills-exchange-tab')) {
-                        document.getElementById('sidebar-pills-exchange-tab').click();
-                    } else if (tabToOpen === 'buy' && document.getElementById('sidebar-pills-Buy-tab')) {
-                        document.getElementById('sidebar-pills-Buy-tab').click();
-                    } else if (tabToOpen === 'sell' && document.getElementById('sidebar-pills-Sell-tab')) {
-                        document.getElementById('sidebar-pills-Sell-tab').click();
-                    }
-                    
-                    // Try to make the wallet button visible too if it exists
-                    const walletBtn = document.getElementById('showAssetsBtn');
-                    if (walletBtn) {
-                        walletBtn.click();
-                    }
-                }
-            }, 500); // Give the page a bit more time to fully initialize
-        }
-    });
-</script>

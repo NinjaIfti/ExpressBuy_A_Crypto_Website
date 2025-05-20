@@ -17,7 +17,7 @@
 <!-- Coin Announce Modal End -->
 
 <!-- Modal section start -->
-<div class="modal fade calculator-modal home-calculator-modal" id="calculator-modal" data-bs-backdrop="static" data-bs-keyboard="false"
+<div class="modal fade calculator-modal" id="calculator-modal" data-bs-backdrop="static" data-bs-keyboard="false"
      tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -44,7 +44,7 @@
         </div>
     </div>
 </div>
-<div class="modal fade calculator-modal home-calculator-modal" id="calculator-modal2" data-bs-backdrop="static" data-bs-keyboard="false"
+<div class="modal fade calculator-modal" id="calculator-modal2" data-bs-backdrop="static" data-bs-keyboard="false"
      tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -72,27 +72,3 @@
     </div>
 </div>
 <!-- Modal section end -->
-
-<script>
-    // Fix z-index for modals
-    document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(function() {
-            const style = document.createElement('style');
-            style.textContent = `
-                .calculator-modal, .home-calculator-modal {
-                    z-index: 9999 !important;
-                }
-                .announcement-modal, #exampleModal {
-                    z-index: 9998 !important;
-                }
-                .modal-backdrop {
-                    z-index: 9990 !important;
-                }
-                .modal-content {
-                    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-                }
-            `;
-            document.head.appendChild(style);
-        }, 500);
-    });
-</script>

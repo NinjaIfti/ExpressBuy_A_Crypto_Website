@@ -42,15 +42,14 @@
 
 
 @include($theme.'partials.script')
+@include($theme.'partials.exchange-module.exchange-js')
 @stack('extra_scripts')
 @yield('scripts')
 @include($theme.'partials.flash-message')
 
 
 @include('plugins')
-@if(Request::url() == url('/') || Request::path() == '/' || Route::currentRouteName() == 'home')
-    @include($theme.'partials.exchange-module.exchange-js')
-@endif
+@stack('scripts')
 
 </body>
 

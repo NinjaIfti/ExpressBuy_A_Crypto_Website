@@ -3,7 +3,7 @@
 @section('content')
     <section class="calculator-details-section">
         <div class="container">
-            <form action="" method="POST">
+            <form action="{{ route('buyProcessing', $buyRequest->utr) }}" method="POST" id="buyProcessingForm">
                 @csrf
                 <div class="row g-xl-5 g-4">
                     @include($theme.'user.buy.buy-leftbar',['progress' => '25','check' => 2])
@@ -37,9 +37,10 @@
                                                             </a>
                                                             <input type="text"
                                                                    name="exchangeSendAmount" id="send"
-                                                                   placeholder="@lang('You send')"
+                                                                   placeholder="@lang('You send')" 
+                                                                   value="{{$buyRequest->send_amount}}"
                                                                    onkeyup="this.value = this.value.replace (/^\.|[^\d\.]/g, '')" required>
-                                                            <input type="hidden" name="exchangeSendCurrency" value="">
+                                                            <input type="hidden" name="exchangeSendCurrency" value="{{$buyRequest->send_currency_id}}">
                                                         </div>
                                                         <div class="d-flex justify-content-between">
                                                             <div class="sub-title" id="showSendName"></div>
@@ -82,9 +83,10 @@
                                                                 <input type="text"
                                                                        name="exchangeGetAmount" id="receive"
                                                                        placeholder="@lang('You get')"
+                                                                       value="{{$buyRequest->get_amount}}"
                                                                        onkeyup="this.value = this.value.replace (/^\.|[^\d\.]/g, '')" required>
                                                                 <input type="hidden" name="exchangeGetCurrency"
-                                                                       value="">
+                                                                       value="{{$buyRequest->get_currency_id}}">
                                                             </div>
                                                             <div class="d-flex justify-content-between">
                                                                 <div class="sub-title" id="showGetName"></div>
@@ -111,7 +113,7 @@
                                 </div>
                             </div>
                             <div class="check">
-                                <input type="checkbox" class="form-check-input" id="exampleCheck1" required>
+                                <input type="checkbox" class="form-check-input" id="exampleCheck1" checked required>
                                 <label class="form-check-label"
                                        for="exampleCheck1">@lang("I agree with Terms of Use and Privacy Policy")</label>
                             </div>
@@ -169,6 +171,37 @@
         getExchangeCurrency();
         setSendCurrency(activeSendCurrency);
         setGetCurrency(activeGetCurrency);
+
+        // Fix for form submission
+        $(document).ready(function() {
+            // Ensure form is properly submitted
+            $("#buyProcessingForm").on('submit', function(e) {
+                // Make sure all required fields are filled
+                if ($("#floatingInputValue").val() === "") {
+                    e.preventDefault();
+                    alert("Please enter a destination wallet address");
+                    return false;
+                }
+                
+                // Ensure currencies are set
+                if ($("input[name='exchangeSendCurrency']").val() === "" || 
+                    $("input[name='exchangeGetCurrency']").val() === "") {
+                    e.preventDefault();
+                    alert("Currency selection is missing. Please refresh the page and try again.");
+                    return false;
+                }
+                
+                // Ensure amounts are valid
+                if ($("#submitBtn").prop('disabled')) {
+                    e.preventDefault();
+                    alert("Please check the amount limits");
+                    return false;
+                }
+                
+                // Everything is good, let the form submit
+                return true;
+            });
+        });
 
         $(document).on("keyup", "input[name='exchangeSendAmount']", function () {
             let sendAmount = $("input[name='exchangeSendAmount']").val();

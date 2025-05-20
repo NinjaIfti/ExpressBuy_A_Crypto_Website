@@ -60,13 +60,13 @@
                         </div>
                     </div>
                     <form action="{{route('sellInitPayment',$sellRequest->utr)}}" method="GET">
-                        <!-- @if(auth()->check())
+                        @if(auth()->check())
                             <div class="check mt-3">
                                 <input type="checkbox" name="payByWallet" class="form-check-input" id="exampleCheck1">
                                 <label class="form-check-label"
                                        for="exampleCheck1">@lang("Pay by wallet")</label>
                             </div>
-                        @endif -->
+                        @endif
                         <div class="widget-area">
                             <button
                                 class="cmn-btn w-100">@lang("Confirm & make payment")</button>
