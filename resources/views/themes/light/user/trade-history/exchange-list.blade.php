@@ -144,3 +144,30 @@
     </div>
     {{ $exchanges->appends($_GET)->links($theme . 'partials.user.pagination') }}
 @endsection
+
+@include($theme . 'partials.wallet-balance')
+
+@push('script')
+<script>
+    // Fallback activateTab function in case the wallet-balance partial hasn't fully loaded
+    if (typeof activateTab !== 'function') {
+        function activateTab(type) {
+            console.log('Using fallback activateTab function');
+            if (window.sidebarWallet && typeof window.sidebarWallet.activateTab === 'function') {
+                window.sidebarWallet.activateTab(type);
+            } else {
+                // Store the operation type for later use
+                localStorage.setItem('operation_type', type);
+                sessionStorage.setItem('sidebarOperation', type);
+                
+                // Try again after a delay
+                setTimeout(function() {
+                    if (window.sidebarWallet && typeof window.sidebarWallet.activateTab === 'function') {
+                        window.sidebarWallet.activateTab(type);
+                    }
+                }, 500);
+            }
+        }
+    }
+</script>
+@endpush

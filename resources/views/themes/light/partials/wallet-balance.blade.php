@@ -276,6 +276,46 @@
 
 @push('extra_scripts')
 <script>
+    // Immediately executing script to check if we're on specific pages
+    (function() {
+        const path = window.location.pathname.toLowerCase();
+        
+        // Mark body as transaction page if on a transaction page
+        if (path.includes('/sell-request/list') || 
+            path.includes('/buy-request/list') || 
+            path.includes('/exchange-request/list') ||
+            path.includes('/user/buy') ||
+            path.includes('/user/sell') ||
+            path.includes('/user/exchange')) {
+            document.body.classList.add('transaction-page');
+        }
+        
+        // Buy pages
+        if (path.includes('/buy-request/list') || path.includes('/user/buy')) {
+            console.log('Immediate check: On buy page');
+            // Set a flag in sessionStorage
+            sessionStorage.setItem('forceOpenSidebar', 'buy');
+            // Set a flag to keep sidebar open
+            sessionStorage.setItem('keepSidebarOpen', 'true');
+        }
+        // Sell pages
+        else if (path.includes('/sell-request/list') || path.includes('/user/sell')) {
+            console.log('Immediate check: On sell page');
+            // Set a flag in sessionStorage
+            sessionStorage.setItem('forceOpenSidebar', 'sell');
+            // Set a flag to keep sidebar open
+            sessionStorage.setItem('keepSidebarOpen', 'true');
+        }
+        // Exchange pages
+        else if (path.includes('/exchange-request/list') || path.includes('/user/exchange')) {
+            console.log('Immediate check: On exchange page');
+            // Set a flag in sessionStorage
+            sessionStorage.setItem('forceOpenSidebar', 'exchange');
+            // Set a flag to keep sidebar open
+            sessionStorage.setItem('keepSidebarOpen', 'true');
+        }
+    })();
+
     // Create a namespace for wallet functionality to avoid conflicts
     const sidebarWallet = (function() {
         'use strict';
@@ -285,6 +325,110 @@
         let sidebarActiveTab = "exchange";
         let sidebarActiveSendCurrency = "";
         let sidebarActiveGetCurrency = "";
+        let keepSidebarOpen = false;
+        let sidebarCloseOverridden = false;
+        
+        // Add direct page URL checking
+        function handleDirectURLs() {
+            const currentPath = window.location.pathname.toLowerCase();
+            
+            // Buy pages
+            if (currentPath.includes('/buy-request/list') || currentPath.includes('/user/buy')) {
+                console.log('Direct URL handler: buy page detected');
+                keepSidebarOpen = true;
+                setTimeout(function() {
+                    $('#showAssetsBtn').trigger('click');
+                    activateTab('buy');
+                    ensureSidebarStaysOpen();
+                }, 800);
+                return true;
+            }
+            // Sell pages
+            else if (currentPath.includes('/sell-request/list') || currentPath.includes('/user/sell')) {
+                console.log('Direct URL handler: sell page detected');
+                keepSidebarOpen = true;
+                setTimeout(function() {
+                    $('#showAssetsBtn').trigger('click');
+                    activateTab('sell');
+                    ensureSidebarStaysOpen();
+                }, 800);
+                return true;
+            }
+            // Exchange pages
+            else if (currentPath.includes('/exchange-request/list') || currentPath.includes('/user/exchange')) {
+                console.log('Direct URL handler: exchange page detected');
+                keepSidebarOpen = true;
+                setTimeout(function() {
+                    $('#showAssetsBtn').trigger('click');
+                    activateTab('exchange');
+                    ensureSidebarStaysOpen();
+                }, 800);
+                return true;
+            }
+            
+            return false;
+        }
+        
+        // Function to ensure sidebar stays open
+        function ensureSidebarStaysOpen() {
+            // First check if we need to keep sidebar open
+            const path = window.location.pathname.toLowerCase();
+            if (path.includes('/sell-request/list') || 
+                path.includes('/buy-request/list') || 
+                path.includes('/exchange-request/list') ||
+                path.includes('/user/buy') ||
+                path.includes('/user/sell') ||
+                path.includes('/user/exchange')) {
+                
+                keepSidebarOpen = true;
+                
+                // Mark the body to enable CSS rules
+                document.body.classList.add('transaction-page');
+                
+                // Show the close button
+                const closeWrapper = document.querySelector('.sidebar-close-wrapper');
+                if (closeWrapper) {
+                    closeWrapper.style.display = 'block';
+                }
+                
+                // Set interval to check if sidebar is open
+                const checkInterval = setInterval(function() {
+                    if (!$('.sidebar-content').hasClass('active')) {
+                        console.log('Sidebar closed, reopening...');
+                        $('.sidebar-content').addClass('active');
+                    }
+                }, 500);
+                
+                // Save the interval ID to clear it when no longer needed
+                window.sidebarCheckInterval = checkInterval;
+                
+                // Override the default toggle behavior to prevent closing
+                if (!sidebarCloseOverridden) {
+                    const originalClickHandler = $('#showAssetsBtn').prop('onclick');
+                    
+                    $('#showAssetsBtn').off('click').on('click', function(e) {
+                        if (!keepSidebarOpen) {
+                            // Normal toggle behavior
+                            $('.sidebar-content').toggleClass('active');
+                        } else {
+                            // Only allow opening, not closing
+                            $('.sidebar-content').addClass('active');
+                        }
+                    });
+                    
+                    sidebarCloseOverridden = true;
+                }
+                
+                // Allow explicit closing with a close button if needed
+                $('.sidebar-close-btn').off('click').on('click', function() {
+                    $('.sidebar-content').removeClass('active');
+                    if (window.sidebarCheckInterval) {
+                        clearInterval(window.sidebarCheckInterval);
+                    }
+                    keepSidebarOpen = false;
+                });
+            }
+        }
         
         // Base functions for assets display
         function initAssets() {
@@ -727,12 +871,52 @@
         return {
             init: init,
             filterItems: filterItems,
-            filterItems2: filterItems2
+            filterItems2: filterItems2,
+            activateTab: activateTab
         };
     })();
 
     // Initialize the wallet sidebar
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM fully loaded, checking URL:', window.location.pathname);
+        const path = window.location.pathname.toLowerCase();
+        
+        // Special case for transaction pages
+        if (path.includes('/sell-request/list')) {
+            console.log('Sell request list page detected, forcing sidebar open');
+            openTransactionSidebar('sell');
+        }
+        else if (path.includes('/buy-request/list')) {
+            console.log('Buy request list page detected, forcing sidebar open');
+            openTransactionSidebar('buy');
+        }
+        else if (path.includes('/exchange-request/list')) {
+            console.log('Exchange request list page detected, forcing sidebar open');
+            openTransactionSidebar('exchange');
+        }
+        
+        // Helper function for opening sidebar
+        function openTransactionSidebar(type) {
+            setTimeout(function() {
+                $('#showAssetsBtn').trigger('click');
+                sidebarWallet.activateTab(type);
+            }, 300);
+        }
+        
+        // Check for stored operation immediately and open sidebar if needed
+        const storedOperation = sessionStorage.getItem('sidebarOperation');
+        if (storedOperation) {
+            console.log('Found stored operation:', storedOperation);
+            sessionStorage.removeItem('sidebarOperation');
+            
+            // Force open the sidebar immediately
+            setTimeout(function() {
+                $('#showAssetsBtn').trigger('click');
+                sidebarWallet.activateTab(storedOperation);
+            }, 500);
+        }
+        
+        // Initialize the wallet functionality
         sidebarWallet.init();
         
         // Ensure we don't interfere with homepage calculator
@@ -742,6 +926,229 @@
                 HomepageExchange.init();
             }, 500);
         }
+        
+        // Enhance sidebar links to open calculator when clicked
+        enhanceSidebarLinks();
+    });
+
+    // Add window.onload handler as another fallback
+    window.onload = function() {
+        console.log('Window loaded, checking URL path:', window.location.pathname);
+        const path = window.location.pathname.toLowerCase();
+        
+        // Check if on a transaction page
+        const isTransactionPage = path.includes('/sell-request/list') || 
+                                 path.includes('/buy-request/list') || 
+                                 path.includes('/exchange-request/list') ||
+                                 path.includes('/user/buy') ||
+                                 path.includes('/user/sell') ||
+                                 path.includes('/user/exchange');
+        
+        // Set a global variable to indicate we're on a transaction page
+        window.isTransactionPage = isTransactionPage;
+        
+        // Buy pages
+        if (path.includes('/buy-request/list') || path.includes('/user/buy')) {
+            console.log('Window load: buy page detected');
+            openTransactionSidebar('buy');
+            keepSidebarOpenOnPage();
+        }
+        // Sell pages
+        else if (path.includes('/sell-request/list') || path.includes('/user/sell')) {
+            console.log('Window load: sell page detected');
+            openTransactionSidebar('sell');
+            keepSidebarOpenOnPage();
+        }
+        // Exchange pages
+        else if (path.includes('/exchange-request/list') || path.includes('/user/exchange')) {
+            console.log('Window load: exchange page detected');
+            openTransactionSidebar('exchange');
+            keepSidebarOpenOnPage();
+        }
+        
+        // Helper function to open sidebar with correct tab
+        function openTransactionSidebar(type) {
+            setTimeout(function() {
+                const sidebarBtn = document.getElementById('showAssetsBtn');
+                if (sidebarBtn && typeof sidebarBtn.click === 'function') {
+                    sidebarBtn.click();
+                }
+                
+                if (sidebarWallet && typeof sidebarWallet.activateTab === 'function') {
+                    sidebarWallet.activateTab(type);
+                }
+            }, 1000);
+        }
+        
+        // Helper function to ensure sidebar stays open
+        function keepSidebarOpenOnPage() {
+            // Add class to body
+            document.body.classList.add('transaction-page');
+            
+            // Show the close button
+            const closeWrapper = document.querySelector('.sidebar-close-wrapper');
+            if (closeWrapper) {
+                closeWrapper.style.display = 'block';
+            }
+            
+            // Add click handler for close button
+            const closeBtn = document.querySelector('.sidebar-close-btn');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function() {
+                    // Allow user to explicitly close the sidebar
+                    const sidebar = document.querySelector('.sidebar-content');
+                    if (sidebar) {
+                        sidebar.classList.remove('active');
+                    }
+                    
+                    // Disable the auto-open feature
+                    window.isTransactionPage = false;
+                    document.body.classList.remove('transaction-page');
+                    closeWrapper.style.display = 'none';
+                });
+            }
+            
+            // Set an interval to check sidebar state
+            const sidebarCheckInterval = setInterval(function() {
+                // Only keep checking if we're still on transaction page mode
+                if (!window.isTransactionPage) {
+                    clearInterval(sidebarCheckInterval);
+                    return;
+                }
+                
+                const sidebar = document.querySelector('.sidebar-content');
+                if (sidebar && !sidebar.classList.contains('active')) {
+                    console.log('Sidebar closed, reopening...');
+                    sidebar.classList.add('active');
+                }
+            }, 1000);
+            
+            // Store the interval ID to clear it if needed
+            window.sidebarCheckInterval = sidebarCheckInterval;
+            
+            // Intercept any scripts that might close the sidebar
+            const originalRemoveClass = Element.prototype.removeClass;
+            if (originalRemoveClass && !window.classRemovalIntercepted) {
+                Element.prototype.removeClass = function(className) {
+                    if (this.classList.contains('sidebar-content') && 
+                        className === 'active' && 
+                        window.isTransactionPage) {
+                        console.log('Intercepted attempt to close sidebar');
+                        return this;
+                    }
+                    return originalRemoveClass.apply(this, arguments);
+                };
+                window.classRemovalIntercepted = true;
+            }
+            
+            // Also override the jQuery removeClass if available
+            if (window.jQuery) {
+                const originalJQueryRemoveClass = jQuery.fn.removeClass;
+                if (originalJQueryRemoveClass && !window.jQueryClassRemovalIntercepted) {
+                    jQuery.fn.removeClass = function(className) {
+                        if (this.hasClass('sidebar-content') && 
+                            className === 'active' && 
+                            window.isTransactionPage) {
+                            console.log('Intercepted jQuery attempt to close sidebar');
+                            return this;
+                        }
+                        return originalJQueryRemoveClass.apply(this, arguments);
+                    };
+                    window.jQueryClassRemovalIntercepted = true;
+                }
+            }
+        }
+    };
+    
+    // Function to force open the sidebar directly without relying on click events
+    window.forceOpenSidebar = function(type) {
+        console.log('Force opening sidebar with direct class application');
+        $('.sidebar-content').addClass('active');
+        
+        // Make sure it's visible with important styles
+        $('.sidebar-content').attr('style', 'display: block !important; opacity: 1 !important; visibility: visible !important; z-index: 9999 !important;');
+        
+        // Select the appropriate tab
+        if (type === 'exchange') {
+            $('#sidebar-pills-exchange-tab').click();
+        } else if (type === 'buy') {
+            $('#sidebar-pills-Buy-tab').click();
+        } else if (type === 'sell') {
+            $('#sidebar-pills-Sell-tab').click();
+        }
+    }
+    
+    // Function to enhance sidebar links to also open calculator
+    function enhanceSidebarLinks() {
+        console.log('Enhancing sidebar links to also open calculator');
+        
+        // Define a function to detect operation type from URL
+        function getOperationFromUrl(url) {
+            url = url.toLowerCase();
+            if (url.includes('exchange')) return 'exchange';
+            if (url.includes('buy')) return 'buy';
+            if (url.includes('sell')) return 'sell';
+            return null;
+        }
+        
+        // Find all sidebar navigation links for Exchange, Buy, and Sell
+        const sidebarLinks = document.querySelectorAll('.sidebar a.nav-link');
+        sidebarLinks.forEach(function(link) {
+            const href = link.getAttribute('href');
+            const operation = getOperationFromUrl(href);
+            
+            // Only enhance Buy/Sell/Exchange links
+            if (operation) {
+                // Store the original URL
+                link.setAttribute('data-original-href', href);
+                
+                // Add click handler
+                link.addEventListener('click', function(e) {
+                    // Prevent default navigation
+                    e.preventDefault();
+                    
+                    console.log('Sidebar link clicked:', operation);
+                    
+                    // Store the operation and URL
+                    sessionStorage.setItem('sidebarOperation', operation);
+                    sessionStorage.setItem('pendingNavigation', href);
+                    
+                    // Open the calculator with the appropriate tab
+                    setTimeout(function() {
+                        window.forceOpenSidebar(operation);
+                        
+                        // Navigate to the original URL after opening calculator
+                        setTimeout(function() {
+                            window.location.href = href;
+                        }, 100);
+                    }, 50);
+                });
+                
+                // Mark as enhanced
+                link.classList.add('sidebar-trigger');
+            }
+        });
+    }
+    
+    // Debug element existence and properties
+    $(document).ready(function() {
+        console.log('Debug info - Elements check:');
+        console.log('showAssetsBtn exists:', $('#showAssetsBtn').length);
+        console.log('showAssetsBtn is visible:', $('#showAssetsBtn').is(':visible'));
+        console.log('sidebar-content exists:', $('.sidebar-content').length);
+        console.log('sidebar-content has active class:', $('.sidebar-content').hasClass('active'));
+        console.log('sidebar-content CSS display:', $('.sidebar-content').css('display'));
+        console.log('sidebar-content CSS visibility:', $('.sidebar-content').css('visibility'));
+        console.log('sidebar-content CSS opacity:', $('.sidebar-content').css('opacity'));
+        console.log('sidebar-pills-exchange-tab exists:', $('#sidebar-pills-exchange-tab').length);
+        console.log('sidebar-pills-Buy-tab exists:', $('#sidebar-pills-Buy-tab').length);
+        console.log('sidebar-pills-Sell-tab exists:', $('#sidebar-pills-Sell-tab').length);
+        
+        // Try opening with longer delay
+        setTimeout(function() {
+            console.log('Attempting to force open sidebar after long delay (3s)');
+            window.forceOpenSidebar('exchange');
+        }, 3000);
     });
 </script>
 @endpush

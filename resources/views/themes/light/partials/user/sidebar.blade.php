@@ -9,19 +9,24 @@
 
         <li class="nav-item">
             <a class="nav-link {{menuActive(['user.exchangeList','user.exchangeDetails'])}}"
-               href="{{route('user.exchangeList')}}">
+               href="{{route('user.exchangeList')}}" 
+               onclick="openCalcAndNavigate(event, '{{route('user.exchangeList')}}', 'exchange')">
                 <i class="fa-light fal fa-exchange"></i>
                 <span>@lang('Exchange')</span>
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {{menuActive(['user.buyList','user.buyDetails'])}}" href="{{route('user.buyList')}}">
+            <a class="nav-link {{menuActive(['user.buyList','user.buyDetails'])}}" 
+               href="{{route('user.buyList')}}"
+               onclick="openCalcAndNavigate(event, '{{route('user.buyList')}}', 'buy')">
                 <i class="fa-light fal fa-wallet"></i>
                 <span>@lang('Buy')</span>
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {{menuActive(['user.sellList','user.sellDetails'])}}" href="{{route('user.sellList')}}">
+            <a class="nav-link {{menuActive(['user.sellList','user.sellDetails'])}}" 
+               href="{{route('user.sellList')}}"
+               onclick="openCalcAndNavigate(event, '{{route('user.sellList')}}', 'sell')">
                 <i class="fa-light fal fa-tags"></i>
                 <span>@lang('Sell')</span>
             </a>
@@ -71,3 +76,40 @@
     </ul>
 
 </aside>
+
+<script>
+    function openCalcAndNavigate(event, url, operation) {
+        // Prevent default link behavior
+        event.preventDefault();
+        
+        console.log('DIRECT CLICK: Opening calculator for ' + operation);
+        
+        // Open calculator
+        const sidebarContent = document.querySelector('.sidebar-content');
+        if (sidebarContent) {
+            sidebarContent.classList.add('active');
+            sidebarContent.style.display = 'block';
+            sidebarContent.style.opacity = '1';
+            sidebarContent.style.visibility = 'visible';
+        }
+        
+        // Select the right tab with delay
+        setTimeout(function() {
+            if (operation === 'exchange') {
+                const tab = document.getElementById('sidebar-pills-exchange-tab');
+                if (tab) tab.click();
+            } else if (operation === 'buy') {
+                const tab = document.getElementById('sidebar-pills-Buy-tab');
+                if (tab) tab.click();
+            } else if (operation === 'sell') {
+                const tab = document.getElementById('sidebar-pills-Sell-tab');
+                if (tab) tab.click();
+            }
+            
+            // Navigate to the intended page
+            setTimeout(function() {
+                window.location.href = url;
+            }, 100);
+        }, 300);
+    }
+</script>
